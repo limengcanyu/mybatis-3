@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 语句处理器
  * Statement handlers.
  */
 package org.apache.ibatis.executor.statement;

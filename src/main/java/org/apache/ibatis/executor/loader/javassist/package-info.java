@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * Javassist代理工厂
  * Javassist proxy factory
  */
 package org.apache.ibatis.executor.loader.javassist;

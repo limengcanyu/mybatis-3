@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 包含key生成器
  * Contains the key generators
  */
 package org.apache.ibatis.executor.keygen;

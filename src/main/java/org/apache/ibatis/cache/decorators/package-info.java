@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 包含缓存装饰器
  * Contains cache decorators
  */
 package org.apache.ibatis.cache.decorators;

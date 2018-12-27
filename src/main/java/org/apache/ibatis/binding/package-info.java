@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 映射语句的映射接口
  * Bings mapper interfaces with mapped statements
  */
 package org.apache.ibatis.binding;

@@ -39,6 +39,7 @@ import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
 /**
+ * 此类表示类定义信息的缓存集合，允许属性名称和getter/setter方法之间的简单映射。
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
  *
@@ -59,15 +60,19 @@ public class Reflector {
 
   public Reflector(Class<?> clazz) {
     type = clazz;
+
     addDefaultConstructor(clazz);
     addGetMethods(clazz);
     addSetMethods(clazz);
     addFields(clazz);
+
     readablePropertyNames = getMethods.keySet().toArray(new String[getMethods.keySet().size()]);
     writeablePropertyNames = setMethods.keySet().toArray(new String[setMethods.keySet().size()]);
+
     for (String propName : readablePropertyNames) {
       caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
     }
+
     for (String propName : writeablePropertyNames) {
       caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
     }
@@ -75,6 +80,7 @@ public class Reflector {
 
   private void addDefaultConstructor(Class<?> clazz) {
     Constructor<?>[] consts = clazz.getDeclaredConstructors();
+
     for (Constructor<?> constructor : consts) {
       if (constructor.getParameterTypes().length == 0) {
           this.defaultConstructor = constructor;
@@ -85,17 +91,21 @@ public class Reflector {
   private void addGetMethods(Class<?> cls) {
     Map<String, List<Method>> conflictingGetters = new HashMap<>();
     Method[] methods = getClassMethods(cls);
+
     for (Method method : methods) {
       if (method.getParameterTypes().length > 0) {
         continue;
       }
+
       String name = method.getName();
+
       if ((name.startsWith("get") && name.length() > 3)
           || (name.startsWith("is") && name.length() > 2)) {
         name = PropertyNamer.methodToProperty(name);
         addMethodConflict(conflictingGetters, name, method);
       }
     }
+
     resolveGetterConflicts(conflictingGetters);
   }
 
@@ -103,13 +113,16 @@ public class Reflector {
     for (Entry<String, List<Method>> entry : conflictingGetters.entrySet()) {
       Method winner = null;
       String propName = entry.getKey();
+
       for (Method candidate : entry.getValue()) {
         if (winner == null) {
           winner = candidate;
           continue;
         }
+
         Class<?> winnerType = winner.getReturnType();
         Class<?> candidateType = candidate.getReturnType();
+
         if (candidateType.equals(winnerType)) {
           if (!boolean.class.equals(candidateType)) {
             throw new ReflectionException(
@@ -130,6 +143,7 @@ public class Reflector {
                   + ". This breaks the JavaBeans specification and can cause unpredictable results.");
         }
       }
+
       addGetMethod(propName, winner);
     }
   }
@@ -145,6 +159,7 @@ public class Reflector {
   private void addSetMethods(Class<?> cls) {
     Map<String, List<Method>> conflictingSetters = new HashMap<>();
     Method[] methods = getClassMethods(cls);
+
     for (Method method : methods) {
       String name = method.getName();
       if (name.startsWith("set") && name.length() > 3) {
@@ -154,6 +169,7 @@ public class Reflector {
         }
       }
     }
+
     resolveSetterConflicts(conflictingSetters);
   }
 
@@ -168,6 +184,7 @@ public class Reflector {
       Class<?> getterType = getTypes.get(propName);
       Method match = null;
       ReflectionException exception = null;
+
       for (Method setter : setters) {
         Class<?> paramType = setter.getParameterTypes()[0];
         if (paramType.equals(getterType)) {
@@ -185,6 +202,7 @@ public class Reflector {
           }
         }
       }
+
       if (match == null) {
         throw exception;
       } else {
@@ -197,13 +215,16 @@ public class Reflector {
     if (setter1 == null) {
       return setter2;
     }
+
     Class<?> paramType1 = setter1.getParameterTypes()[0];
     Class<?> paramType2 = setter2.getParameterTypes()[0];
+
     if (paramType1.isAssignableFrom(paramType2)) {
       return setter2;
     } else if (paramType2.isAssignableFrom(paramType1)) {
       return setter1;
     }
+
     throw new ReflectionException("Ambiguous setters defined for property '" + property + "' in class '"
         + setter2.getDeclaringClass() + "' with types '" + paramType1.getName() + "' and '"
         + paramType2.getName() + "'.");
@@ -219,6 +240,7 @@ public class Reflector {
 
   private Class<?> typeToClass(Type src) {
     Class<?> result = null;
+
     if (src instanceof Class) {
       result = (Class<?>) src;
     } else if (src instanceof ParameterizedType) {
@@ -232,6 +254,7 @@ public class Reflector {
         result = Array.newInstance(componentClass, 0).getClass();
       }
     }
+
     if (result == null) {
       result = Object.class;
     }
@@ -240,6 +263,7 @@ public class Reflector {
 
   private void addFields(Class<?> clazz) {
     Field[] fields = clazz.getDeclaredFields();
+
     for (Field field : fields) {
       if (!setMethods.containsKey(field.getName())) {
         // issue #379 - removed the check for final because JDK 1.5 allows
@@ -250,10 +274,12 @@ public class Reflector {
           addSetField(field);
         }
       }
+
       if (!getMethods.containsKey(field.getName())) {
         addGetField(field);
       }
     }
+
     if (clazz.getSuperclass() != null) {
       addFields(clazz.getSuperclass());
     }
@@ -291,6 +317,7 @@ public class Reflector {
   private Method[] getClassMethods(Class<?> cls) {
     Map<String, Method> uniqueMethods = new HashMap<>();
     Class<?> currentClass = cls;
+
     while (currentClass != null && currentClass != Object.class) {
       addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
 
@@ -326,11 +353,14 @@ public class Reflector {
   private String getSignature(Method method) {
     StringBuilder sb = new StringBuilder();
     Class<?> returnType = method.getReturnType();
+
     if (returnType != null) {
       sb.append(returnType.getName()).append('#');
     }
+
     sb.append(method.getName());
     Class<?>[] parameters = method.getParameterTypes();
+
     for (int i = 0; i < parameters.length; i++) {
       if (i == 0) {
         sb.append(':');
@@ -339,6 +369,7 @@ public class Reflector {
       }
       sb.append(parameters[i].getName());
     }
+
     return sb.toString();
   }
 
@@ -357,6 +388,7 @@ public class Reflector {
     } catch (SecurityException e) {
       return false;
     }
+
     return true;
   }
 
@@ -386,6 +418,7 @@ public class Reflector {
     if (method == null) {
       throw new ReflectionException("There is no setter for property named '" + propertyName + "' in '" + type + "'");
     }
+
     return method;
   }
 
@@ -394,6 +427,7 @@ public class Reflector {
     if (method == null) {
       throw new ReflectionException("There is no getter for property named '" + propertyName + "' in '" + type + "'");
     }
+
     return method;
   }
 
@@ -408,6 +442,7 @@ public class Reflector {
     if (clazz == null) {
       throw new ReflectionException("There is no setter for property named '" + propertyName + "' in '" + type + "'");
     }
+
     return clazz;
   }
 
@@ -422,6 +457,7 @@ public class Reflector {
     if (clazz == null) {
       throw new ReflectionException("There is no getter for property named '" + propertyName + "' in '" + type + "'");
     }
+
     return clazz;
   }
 

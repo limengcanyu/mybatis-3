@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 异常基础包
  * Base package for exceptions.
  */
 package org.apache.ibatis.exceptions;

@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 事务基础包
  * Base package for transactions.
  */
 package org.apache.ibatis.transaction;

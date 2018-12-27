@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 游标功能的基础包
  * Base package for cursor feature
  */
 package org.apache.ibatis.cursor;

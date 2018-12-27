@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * JDBC工具。
  * Utilities for JDBC.
  */
 package org.apache.ibatis.jdbc;

@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 创建配置的解析注解
  * Parses annotions to create a Configuration
  */
 package org.apache.ibatis.builder.annotation;

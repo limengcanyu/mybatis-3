@@ -19,6 +19,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
+ * 包装数据库连接
+ * 处理连接的生命周期，包括：创建，准备，提交/回滚，以及关闭
  * Wraps a database connection.
  * Handles the connection lifecycle that comprises: its creation, preparation, commit/rollback and close. 
  *

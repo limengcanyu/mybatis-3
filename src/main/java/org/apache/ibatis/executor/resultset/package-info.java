@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 包含结果处理逻辑
  * Contains the result processing logic
  */
 package org.apache.ibatis.executor.resultset;

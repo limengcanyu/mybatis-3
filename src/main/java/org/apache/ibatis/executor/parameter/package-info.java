@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 /**
+ * 处理参数的基础包
  * Base package for handling parameters.
  */
 package org.apache.ibatis.executor.parameter;
