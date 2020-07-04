@@ -1,5 +1,5 @@
 /**
- *    Copyright 2009-2018 the original author or authors.
+ *    Copyright 2009-2020 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.apache.ibatis.builder.xml;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Properties;
+
 import javax.sql.DataSource;
 
 import org.apache.ibatis.builder.BaseBuilder;
@@ -95,28 +96,28 @@ public class XMLConfigBuilder extends BaseBuilder {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
-    parseConfiguration(parser.evalNode("*[local-name()='configuration']"));
+    parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
   private void parseConfiguration(XNode root) {
     try {
-      //issue #117 read properties first
-      propertiesElement(root.evalNode("*[local-name()='properties']"));
-      Properties settings = settingsAsProperties(root.evalNode("*[local-name()='settings']"));
+      // issue #117 read properties first
+      propertiesElement(root.evalNode("properties"));
+      Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
       loadCustomLogImpl(settings);
-      typeAliasesElement(root.evalNode("*[local-name()='typeAliases']"));
-      pluginElement(root.evalNode("*[local-name()='plugins']"));
-      objectFactoryElement(root.evalNode("*[local-name()='objectFactory']"));
-      objectWrapperFactoryElement(root.evalNode("*[local-name()='objectWrapperFactory']"));
-      reflectorFactoryElement(root.evalNode("*[local-name()='reflectorFactory']"));
+      typeAliasesElement(root.evalNode("typeAliases"));
+      pluginElement(root.evalNode("plugins"));
+      objectFactoryElement(root.evalNode("objectFactory"));
+      objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+      reflectorFactoryElement(root.evalNode("reflectorFactory"));
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
-      environmentsElement(root.evalNode("*[local-name()='environments']"));
-      databaseIdProviderElement(root.evalNode("*[local-name()='databaseIdProvider']"));
-      typeHandlerElement(root.evalNode("*[local-name()='typeHandlers']"));
-      mapperElement(root.evalNode("*[local-name()='mappers']"));
+      environmentsElement(root.evalNode("environments"));
+      databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+      typeHandlerElement(root.evalNode("typeHandlers"));
+      mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
     }
@@ -185,7 +186,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : parent.getChildren()) {
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();
-        Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).newInstance();
+        Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).getDeclaredConstructor().newInstance();
         interceptorInstance.setProperties(properties);
         configuration.addInterceptor(interceptorInstance);
       }
@@ -196,7 +197,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (context != null) {
       String type = context.getStringAttribute("type");
       Properties properties = context.getChildrenAsProperties();
-      ObjectFactory factory = (ObjectFactory) resolveClass(type).newInstance();
+      ObjectFactory factory = (ObjectFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       factory.setProperties(properties);
       configuration.setObjectFactory(factory);
     }
@@ -205,16 +206,16 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void objectWrapperFactoryElement(XNode context) throws Exception {
     if (context != null) {
       String type = context.getStringAttribute("type");
-      ObjectWrapperFactory factory = (ObjectWrapperFactory) resolveClass(type).newInstance();
+      ObjectWrapperFactory factory = (ObjectWrapperFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       configuration.setObjectWrapperFactory(factory);
     }
   }
 
   private void reflectorFactoryElement(XNode context) throws Exception {
     if (context != null) {
-       String type = context.getStringAttribute("type");
-       ReflectorFactory factory = (ReflectorFactory) resolveClass(type).newInstance();
-       configuration.setReflectorFactory(factory);
+      String type = context.getStringAttribute("type");
+      ReflectorFactory factory = (ReflectorFactory) resolveClass(type).getDeclaredConstructor().newInstance();
+      configuration.setReflectorFactory(factory);
     }
   }
 
@@ -253,6 +254,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     configuration.setDefaultExecutorType(ExecutorType.valueOf(props.getProperty("defaultExecutorType", "SIMPLE")));
     configuration.setDefaultStatementTimeout(integerValueOf(props.getProperty("defaultStatementTimeout"), null));
     configuration.setDefaultFetchSize(integerValueOf(props.getProperty("defaultFetchSize"), null));
+    configuration.setDefaultResultSetType(resolveResultSetType(props.getProperty("defaultResultSetType")));
     configuration.setMapUnderscoreToCamelCase(booleanValueOf(props.getProperty("mapUnderscoreToCamelCase"), false));
     configuration.setSafeRowBoundsEnabled(booleanValueOf(props.getProperty("safeRowBoundsEnabled"), false));
     configuration.setLocalCacheScope(LocalCacheScope.valueOf(props.getProperty("localCacheScope", "SESSION")));
@@ -266,6 +268,8 @@ public class XMLConfigBuilder extends BaseBuilder {
     configuration.setReturnInstanceForEmptyRow(booleanValueOf(props.getProperty("returnInstanceForEmptyRow"), false));
     configuration.setLogPrefix(props.getProperty("logPrefix"));
     configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
+    configuration.setShrinkWhitespacesInSql(booleanValueOf(props.getProperty("shrinkWhitespacesInSql"), false));
+    configuration.setDefaultSqlProviderType(resolveClass(props.getProperty("defaultSqlProviderType")));
   }
 
   private void environmentsElement(XNode context) throws Exception {
@@ -276,8 +280,8 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : context.getChildren()) {
         String id = child.getStringAttribute("id");
         if (isSpecifiedEnvironment(id)) {
-          TransactionFactory txFactory = transactionManagerElement(child.evalNode("*[local-name()='transactionManager']"));
-          DataSourceFactory dsFactory = dataSourceElement(child.evalNode("*[local-name()='dataSource']"));
+          TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+          DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
           Environment.Builder environmentBuilder = new Environment.Builder(id)
               .transactionFactory(txFactory)
@@ -294,10 +298,10 @@ public class XMLConfigBuilder extends BaseBuilder {
       String type = context.getStringAttribute("type");
       // awful patch to keep backward compatibility
       if ("VENDOR".equals(type)) {
-          type = "DB_VENDOR";
+        type = "DB_VENDOR";
       }
       Properties properties = context.getChildrenAsProperties();
-      databaseIdProvider = (DatabaseIdProvider) resolveClass(type).newInstance();
+      databaseIdProvider = (DatabaseIdProvider) resolveClass(type).getDeclaredConstructor().newInstance();
       databaseIdProvider.setProperties(properties);
     }
     Environment environment = configuration.getEnvironment();
@@ -311,7 +315,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (context != null) {
       String type = context.getStringAttribute("type");
       Properties props = context.getChildrenAsProperties();
-      TransactionFactory factory = (TransactionFactory) resolveClass(type).newInstance();
+      TransactionFactory factory = (TransactionFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       factory.setProperties(props);
       return factory;
     }
@@ -322,7 +326,7 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (context != null) {
       String type = context.getStringAttribute("type");
       Properties props = context.getChildrenAsProperties();
-      DataSourceFactory factory = (DataSourceFactory) resolveClass(type).newInstance();
+      DataSourceFactory factory = (DataSourceFactory) resolveClass(type).getDeclaredConstructor().newInstance();
       factory.setProperties(props);
       return factory;
     }
